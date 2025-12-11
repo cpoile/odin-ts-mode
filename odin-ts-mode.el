@@ -116,12 +116,15 @@
   "Operators used in `odin-ts-mode`.")
 
 (defconst odin-ts-mode--keywords
-  '("foreign" "or_continue" "or_break" "or_else" "or_return"
+  '("foreign"
     "in" "not_in"
     "defer" "return" "proc"
     "struct" "union" "enum" "bit_field" "bit_set" "map"
     "using")
   "Keywords used in the Odin language.")
+
+(defconst odin-ts-mode--special-keywords
+  '("or_continue" "or_break" "or_else" "or_return"))
 
 (defconst odin-ts-mode--conditionals
   '("if" "else" "when" "switch" "case" "where" "break")
@@ -186,6 +189,11 @@
 
    :language 'odin
    :override t
+   :feature 'special-keyword
+   `([,@odin-ts-mode--special-keywords] @font-lock-operator-face)
+
+   :language 'odin
+   :override t
    :feature 'builtin
    '(["auto_cast" "cast" "transmute"] @font-lock-builtin-face)
 
@@ -233,7 +241,7 @@
   '((comment string)
     (keyword type)
     (builtin preproc escape-sequence literal constant function)
-    (operator punctuation variable namespace property))
+    (operator punctuation variable namespace property special-keyword))
   "Feature list used by `odin-ts-mode`.")
 
 (defconst odin-ts-mode--imenu-settings
