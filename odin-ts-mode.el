@@ -49,7 +49,6 @@
 ;;; Code:
 
 (require 'treesit)
-(require 'js)
 (require 'c-ts-common)
 
 (defgroup odin-ts nil
@@ -61,6 +60,11 @@
   "Hook run after entering `odin-ts-mode`."
   :version "29.1"
   :type 'symbol
+  :group 'odin-ts)
+
+(defcustom odin-ts-mode-indent-offset 4
+  "Number of spaces for each indentation step in `odin-ts-mode'."
+  :type 'integer
   :group 'odin-ts)
 
 (defconst odin-ts-mode--syntax-table ;; shamelessly stolen directly from odin-mode
@@ -241,6 +245,36 @@
     ("Function" "\\`overloaded_procedure_declaration\\'" nil nil))
   "Imenu settings used by `odin-ts-mode`.")
 
+(defvar odin-ts-mode--indent-rules
+  `((odin
+     ;; Closing brackets align with parent
+     ((node-is ")") parent-bol 0)
+     ((node-is "]") parent-bol 0)
+     ((node-is "}") parent-bol 0)
+     ;; Block contents
+     ((parent-is "block") parent-bol odin-ts-mode-indent-offset)
+     ;; Switch cases - case itself at parent level, contents indented
+     ((node-is "switch_case") parent-bol 0)
+     ((parent-is "switch_case") parent-bol odin-ts-mode-indent-offset)
+     ;; Type declarations
+     ((parent-is "struct_declaration") parent-bol odin-ts-mode-indent-offset)
+     ((parent-is "enum_declaration") parent-bol odin-ts-mode-indent-offset)
+     ((parent-is "union_declaration") parent-bol odin-ts-mode-indent-offset)
+     ((parent-is "bit_field_declaration") parent-bol odin-ts-mode-indent-offset)
+     ;; Struct/enum type literals
+     ((parent-is "struct_type") parent-bol odin-ts-mode-indent-offset)
+     ((parent-is "enum_type") parent-bol odin-ts-mode-indent-offset)
+     ((parent-is "struct") parent-bol odin-ts-mode-indent-offset)
+     ;; Procedure parameters
+     ((parent-is "parameters") parent-bol odin-ts-mode-indent-offset)
+     ;; Call arguments
+     ((parent-is "call_expression") parent-bol odin-ts-mode-indent-offset)
+     ;; Foreign block
+     ((parent-is "foreign_block") parent-bol odin-ts-mode-indent-offset)
+     ;; Fallback for empty lines
+     (no-node parent-bol 0)))
+  "Tree-sitter indent rules for `odin-ts-mode'.")
+
 (defun odin-ts-mode-setup ()
   "Setup treesit for `odin-ts-mode`."
 
@@ -249,7 +283,8 @@
               treesit-font-lock-feature-list odin-ts-mode--font-lock-feature-list)
 
   ;; Indentation
-  (setq-local indent-line-function 'js-indent-line
+  (setq-local treesit-simple-indent-rules odin-ts-mode--indent-rules
+              indent-tabs-mode nil
               electric-indent-chars (append "{}():;," electric-indent-chars))
 
   ;; Imenu
