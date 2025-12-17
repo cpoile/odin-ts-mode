@@ -124,14 +124,14 @@
   "Keywords used in the Odin language.")
 
 (defconst odin-ts-mode--special-keywords
-  '("or_continue" "or_break" "or_else" "or_return"))
+  '("or_continue" "or_break" "or_else" "or_return" "do"))
 
 (defconst odin-ts-mode--conditionals
   '("if" "else" "when" "switch" "case" "where" "break")
   "Conditionals used in `odin-ts-mode`.")
 
 (defconst odin-ts-mode--repeats
-  '("for" "do" "continue")
+  '("for" "continue")
   "Repeats used in `odin-ts-mode`.")
 
 (defvar odin-ts-mode--font-lock-rules
