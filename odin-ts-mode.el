@@ -244,13 +244,20 @@
     (operator punctuation variable namespace property special-keyword))
   "Feature list used by `odin-ts-mode`.")
 
+(defun odin-ts-mode--defun-name (node)
+  "Return the defun name of NODE.
+Return nil if there is no name or if NODE is not a defun node."
+  (treesit-node-text
+   (treesit-search-subtree node "identifier" nil nil 1)
+   t))
+
 (defconst odin-ts-mode--imenu-settings
-  `(("Struct" "\\`struct_declaration\\'" nil nil)
-    ("Enum" "\\`enum_declaration\\'" nil nil)
-    ("Union" "\\`union_declaration\\'" nil nil)
-    ("Bit Field" "\\`bit_field_declaration\\'" nil nil)
-    ("Function" "\\`procedure_declaration\\'" nil nil)
-    ("Function" "\\`overloaded_procedure_declaration\\'" nil nil))
+  `(("Struct" "\\`struct_declaration\\'" nil odin-ts-mode--defun-name)
+    ("Enum" "\\`enum_declaration\\'" nil odin-ts-mode--defun-name)
+    ("Union" "\\`union_declaration\\'" nil odin-ts-mode--defun-name)
+    ("Bit Field" "\\`bit_field_declaration\\'" nil odin-ts-mode--defun-name)
+    ("Function" "\\`procedure_declaration\\'" nil odin-ts-mode--defun-name)
+    ("Function" "\\`overloaded_procedure_declaration\\'" nil odin-ts-mode--defun-name))
   "Imenu settings used by `odin-ts-mode`.")
 
 (defvar odin-ts-mode--indent-rules
