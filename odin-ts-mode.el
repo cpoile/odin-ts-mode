@@ -251,13 +251,41 @@ Return nil if there is no name or if NODE is not a defun node."
    (treesit-search-subtree node "identifier" nil nil 1)
    t))
 
+(defun odin-ts-mode--type-name (node)
+  "Return the name of NODE with type face applied."
+  (let ((name (treesit-node-text
+               (treesit-search-subtree node "identifier" nil nil 1)
+               t)))
+    (propertize name 'face 'font-lock-type-face)))
+
+(defun odin-ts-mode--proc-signature (node)
+  "Return the full signature for a procedure NODE.
+Returns a string like `name (arg1: type) -> return_type`."
+  (let* ((name (treesit-node-text
+                (treesit-search-subtree node "identifier" nil nil 1)
+                t))
+         (params (treesit-search-subtree node "parameters"))
+         ;; Return type is a sibling of parameters with type "type"
+         (returns (when params
+                    (let ((sibling (treesit-node-next-sibling params t)))
+                      (while (and sibling
+                                  (not (string= (treesit-node-type sibling) "type")))
+                        (setq sibling (treesit-node-next-sibling sibling t)))
+                      sibling))))
+    (concat (propertize name 'face 'font-lock-function-name-face)
+            (if params
+                (concat " :: " (treesit-node-text params t))
+              " :: ()")
+            (when returns
+              (concat " -> " (treesit-node-text returns t))))))
+
 (defconst odin-ts-mode--imenu-settings
-  `(("Struct" "\\`struct_declaration\\'" nil odin-ts-mode--defun-name)
-    ("Enum" "\\`enum_declaration\\'" nil odin-ts-mode--defun-name)
-    ("Union" "\\`union_declaration\\'" nil odin-ts-mode--defun-name)
-    ("Bit Field" "\\`bit_field_declaration\\'" nil odin-ts-mode--defun-name)
-    ("Function" "\\`procedure_declaration\\'" nil odin-ts-mode--defun-name)
-    ("Function" "\\`overloaded_procedure_declaration\\'" nil odin-ts-mode--defun-name))
+  `((nil "\\`struct_declaration\\'" nil odin-ts-mode--type-name)
+    (nil "\\`enum_declaration\\'" nil odin-ts-mode--type-name)
+    (nil "\\`union_declaration\\'" nil odin-ts-mode--type-name)
+    (nil "\\`bit_field_declaration\\'" nil odin-ts-mode--type-name)
+    (nil "\\`procedure_declaration\\'" nil odin-ts-mode--proc-signature)
+    (nil "\\`overloaded_procedure_declaration\\'" nil odin-ts-mode--proc-signature))
   "Imenu settings used by `odin-ts-mode`.")
 
 (defvar odin-ts-mode--indent-rules
