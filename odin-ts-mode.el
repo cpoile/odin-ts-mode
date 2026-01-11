@@ -338,6 +338,15 @@ Returns a string like `name (arg1: type) -> return_type`."
   ;; Imenu
   (setq-local treesit-simple-imenu-settings odin-ts-mode--imenu-settings)
 
+  ;; Defun navigation (enables narrow-to-defun, beginning-of-defun, etc.)
+  (setq-local treesit-defun-type-regexp
+              (regexp-opt '("procedure_declaration"
+                            "overloaded_procedure_declaration"
+                            "struct_declaration"
+                            "enum_declaration"
+                            "union_declaration"
+                            "bit_field_declaration")))
+
   ;; Comment
   (c-ts-common-comment-setup)
 
