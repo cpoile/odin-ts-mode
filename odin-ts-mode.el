@@ -67,6 +67,11 @@
   :type 'integer
   :group 'odin-ts)
 
+(defcustom odin-ts-mode-delete-trailing-whitespace nil
+  "If non-nil, delete trailing whitespace on save."
+  :type 'boolean
+  :group 'odin-ts)
+
 (defconst odin-ts-mode--syntax-table ;; shamelessly stolen directly from odin-mode
   (let ((table (make-syntax-table)))
     (modify-syntax-entry ?\" "\"" table)
@@ -327,7 +332,7 @@ Returns a string like `name (arg1: type) -> return_type`."
 
   ;; Indentation
   (setq-local treesit-simple-indent-rules odin-ts-mode--indent-rules
-              indent-tabs-mode nil
+              indent-tabs-mode t
               electric-indent-chars (append "{}():;," electric-indent-chars))
 
   ;; Imenu
@@ -335,6 +340,10 @@ Returns a string like `name (arg1: type) -> return_type`."
 
   ;; Comment
   (c-ts-common-comment-setup)
+
+  ;; Remove trailing whitespace on save
+  (when odin-ts-mode-delete-trailing-whitespace
+    (add-hook 'before-save-hook #'delete-trailing-whitespace nil t))
 
   (treesit-major-mode-setup))
 
