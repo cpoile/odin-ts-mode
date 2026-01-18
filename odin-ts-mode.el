@@ -319,6 +319,14 @@ Returns a string like `name (arg1: type) -> return_type`."
      ((parent-is "call_expression") parent-bol odin-ts-mode-indent-offset)
      ;; Foreign block
      ((parent-is "foreign_block") parent-bol odin-ts-mode-indent-offset)
+     ;; Binary expressions (multiline conditions like `if a && \n b`)
+     ((parent-is "binary_expression") parent-bol odin-ts-mode-indent-offset)
+     ;; Comparison expressions
+     ((parent-is "comparison_expression") parent-bol odin-ts-mode-indent-offset)
+     ;; Unary expressions
+     ((parent-is "unary_expression") parent-bol odin-ts-mode-indent-offset)
+     ;; Ternary expressions
+     ((parent-is "ternary_expression") parent-bol odin-ts-mode-indent-offset)
      ;; Fallback for empty lines
      (no-node parent-bol 0)))
   "Tree-sitter indent rules for `odin-ts-mode'.")
