@@ -181,7 +181,8 @@
    :language 'odin
    :override t
    :feature 'preproc
-   '([(calling_convention) (tag)] @font-lock-preprocessor-face)
+   '([(calling_convention) (tag)] @font-lock-preprocessor-face
+     (attribute) @font-lock-preprocessor-face)
 
    :language 'odin
    :override t
@@ -226,7 +227,7 @@
    `([,@odin-ts-mode--operators] @font-lock-punctuation-face
      ["{" "}" "(" ")" "[" "]"] @font-lock-punctuation-face
      ["::" "->" "." "," ":" ";"] @font-lock-punctuation-face
-     ["@" "$"] @font-lock-punctuation-face)
+     "$" @font-lock-punctuation-face)
 
    :language 'odin
    :override t
