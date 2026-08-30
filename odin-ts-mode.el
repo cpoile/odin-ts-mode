@@ -65,6 +65,7 @@
 (defcustom odin-ts-mode-indent-offset 4
   "Number of spaces for each indentation step in `odin-ts-mode'."
   :type 'integer
+  :safe 'integerp
   :group 'odin-ts)
 
 (defcustom odin-ts-mode-delete-trailing-whitespace nil
@@ -294,43 +295,61 @@ Returns a string like `name (arg1: type) -> return_type`."
     (nil "\\`overloaded_procedure_declaration\\'" nil odin-ts-mode--proc-signature))
   "Imenu settings used by `odin-ts-mode`.")
 
-(defvar odin-ts-mode--indent-rules
-  `((odin
-     ;; Closing brackets align with parent
-     ((node-is ")") parent-bol 0)
+;; Adapted from c-ts-mode because the Odin grammar distinguishes line comments
+;; from block comments.
+(defun odin-ts-comment-2nd-line-matcher (_n parent &rest _)
+  "Matches if point is at the second line of a block comment.
+PARENT should be a block_comment node."
+  (and (equal (treesit-node-type parent) "block_comment")
+       (save-excursion
+         (forward-line -1)
+         (back-to-indentation)
+         (eq (point) (treesit-node-start parent)))))
+
+;; Ported from tree-sitter-odin's queries/indents.scm and extended for
+;; multiline expressions.
+(defvar odin-ts-mode-indent-rules
+  '((odin
      ((node-is "]") parent-bol 0)
-     ((node-is "}") parent-bol 0)
-     ;; Block contents
-     ((parent-is "block") parent-bol odin-ts-mode-indent-offset)
-     ;; Switch cases - case itself at parent level, contents indented
-     ((node-is "switch_case") parent-bol 0)
-     ((parent-is "switch_case") parent-bol odin-ts-mode-indent-offset)
-     ;; Type declarations
-     ((parent-is "struct_declaration") parent-bol odin-ts-mode-indent-offset)
+     ((node-is ")") parent-bol 0)
+     ((node-is "}") (and parent parent-bol) 0)
+
+     ((parent-is "^block$") parent-bol odin-ts-mode-indent-offset)
+
+     ;; Declarations
      ((parent-is "enum_declaration") parent-bol odin-ts-mode-indent-offset)
      ((parent-is "union_declaration") parent-bol odin-ts-mode-indent-offset)
+     ((parent-is "struct_declaration") parent-bol odin-ts-mode-indent-offset)
      ((parent-is "bit_field_declaration") parent-bol odin-ts-mode-indent-offset)
-     ;; Struct/enum type literals
+
+     ;; Anonymous aggregate types
+     ((parent-is "union_type") parent-bol odin-ts-mode-indent-offset)
      ((parent-is "struct_type") parent-bol odin-ts-mode-indent-offset)
      ((parent-is "enum_type") parent-bol odin-ts-mode-indent-offset)
-     ((parent-is "struct") parent-bol odin-ts-mode-indent-offset)
-     ;; Procedure parameters
+
+     ((parent-is "^struct$") parent-bol odin-ts-mode-indent-offset)
      ((parent-is "parameters") parent-bol odin-ts-mode-indent-offset)
-     ;; Call arguments
+     ((parent-is "tuple_type") parent-bol odin-ts-mode-indent-offset)
      ((parent-is "call_expression") parent-bol odin-ts-mode-indent-offset)
-     ;; Foreign block
+     ((parent-is "switch_case") parent-bol odin-ts-mode-indent-offset)
      ((parent-is "foreign_block") parent-bol odin-ts-mode-indent-offset)
-     ;; Binary expressions (multiline conditions like `if a && \n b`)
+
+     ;; Multiline expressions
      ((parent-is "binary_expression") parent-bol odin-ts-mode-indent-offset)
-     ;; Comparison expressions
-     ((parent-is "comparison_expression") parent-bol odin-ts-mode-indent-offset)
-     ;; Unary expressions
      ((parent-is "unary_expression") parent-bol odin-ts-mode-indent-offset)
-     ;; Ternary expressions
      ((parent-is "ternary_expression") parent-bol odin-ts-mode-indent-offset)
-     ;; Fallback for empty lines
-     (no-node parent-bol 0)))
-  "Tree-sitter indent rules for `odin-ts-mode'.")
+
+     ;; Shamelessely stolen from c-ts-mode
+     ((and (parent-is "block_comment") c-ts-common-looking-at-star)
+      c-ts-common-comment-start-after-first-star -1)
+     (odin-ts-comment-2nd-line-matcher
+      c-ts-common-comment-2nd-line-anchor
+      1)
+
+     ((parent-is "block_comment") prev-adaptive-prefix 0)
+
+     (catch-all parent-bol 0)))
+  "Tree-sitter indent rules for `odin-ts-mode`.")
 
 (defun odin-ts-mode-setup ()
   "Setup treesit for `odin-ts-mode`."
@@ -340,7 +359,7 @@ Returns a string like `name (arg1: type) -> return_type`."
               treesit-font-lock-feature-list odin-ts-mode--font-lock-feature-list)
 
   ;; Indentation
-  (setq-local treesit-simple-indent-rules odin-ts-mode--indent-rules
+  (setq-local treesit-simple-indent-rules odin-ts-mode-indent-rules
               indent-tabs-mode t
               electric-indent-chars (append "{}():;," electric-indent-chars))
 
