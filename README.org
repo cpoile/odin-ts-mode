@@ -44,6 +44,10 @@ Add this to your configuration:
   (add-to-list 'auto-mode-alist '("\\.odin\\'" . odin-ts-mode))
 #+end_src
 
+Branches that can be proven inactive from literal boolean expressions in
+=when= statements are displayed using =font-lock-comment-face=.  Set
+=odin-ts-mode-fontify-inactive-when-blocks= to =nil= to disable this.
+
 ** TODO Roadmap? [2/3]
 - [-] Syntax Highlighting [1/2]
   - [X] Get something working
