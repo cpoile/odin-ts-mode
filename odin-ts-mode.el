@@ -450,13 +450,38 @@ PARENT should be a block_comment node."
          (back-to-indentation)
          (eq (point) (treesit-node-start parent)))))
 
+(defun odin-ts-mode--empty-switch-case-body-indent (node parent bol)
+  "Indent an empty line before a switch statement's closing brace.
+When the last switch case has no body yet, tree-sitter reports no NODE
+for the empty line and its PARENT as the enclosing switch statement.
+Anchor that line to the case so typing can begin at the body's indent."
+  (when (and (null node)
+             parent
+             (string= (treesit-node-type parent) "switch_statement"))
+    (let ((last-child (car (last (treesit-node-children parent t)))))
+      (when (and last-child
+                 (string= (treesit-node-type last-child) "switch_case")
+                 (save-excursion
+                   (goto-char bol)
+                   (forward-line 1)
+                   (back-to-indentation)
+                   (eq (char-after) ?})))
+        (cons (treesit-node-start last-child)
+              odin-ts-mode-indent-offset)))))
+
 ;; Ported from tree-sitter-odin's queries/indents.scm and extended for
 ;; multiline expressions.
 (defvar odin-ts-mode-indent-rules
   '((odin
+     odin-ts-mode--empty-switch-case-body-indent
+
      ((node-is "]") parent-bol 0)
      ((node-is ")") parent-bol 0)
      ((node-is "}") (and parent parent-bol) 0)
+
+     ;; Keep incomplete expressions inside the block where the parse error
+     ;; began instead of falling back to the error node's column zero.
+     ((parent-is "^ERROR$") parent-bol odin-ts-mode-indent-offset)
 
      ((parent-is "^block$") parent-bol odin-ts-mode-indent-offset)
 
